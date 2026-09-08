@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Data (large files — keep structure, not content)
+data/raw/positive/
+data/raw/negative/
+data/processed/
+
+# Model weights & outputs
+outputs/checkpoints/
+outputs/logs/
+outputs/visualizations/
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Gradio temp
+gradio_cached_examples/
+flagged/
