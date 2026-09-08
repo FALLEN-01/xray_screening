@@ -1,8 +1,8 @@
 """
-dataset.py — XRayDataset, data splitting, augmentation, WeightedRandomSampler.
+dataset.py -- XRayDataset, data splitting, augmentation, WeightedRandomSampler.
 Compatible with SIXray folder layout:
-    data/raw/positive/   ← images with prohibited items  (label = 1)
-    data/raw/negative/   ← safe bag images               (label = 0)
+    data/raw/positive/   <- images with prohibited items  (label = 1)
+    data/raw/negative/   <- safe bag images               (label = 0)
 """
 import os
 import csv
@@ -18,7 +18,7 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
 
-# ─── Transforms ──────────────────────────────────────────────────────────────
+# --- Transforms --------------------------------------------------------------
 
 def get_transforms(split: str, image_size: int = 224) -> A.Compose:
     """Return Albumentations pipeline for train / val / test."""
@@ -37,7 +37,7 @@ def get_transforms(split: str, image_size: int = 224) -> A.Compose:
             A.Normalize(mean=mean, std=std),
             ToTensorV2(),
         ])
-    else:  # val / test — no augmentation
+    else:  # val / test -- no augmentation
         return A.Compose([
             A.Resize(image_size, image_size),
             A.Normalize(mean=mean, std=std),
@@ -45,7 +45,7 @@ def get_transforms(split: str, image_size: int = 224) -> A.Compose:
         ])
 
 
-# ─── Dataset ─────────────────────────────────────────────────────────────────
+# --- Dataset -----------------------------------------------------------------
 
 class XRayDataset(Dataset):
     """
@@ -77,7 +77,7 @@ class XRayDataset(Dataset):
         return [s[1] for s in self.samples]
 
 
-# ─── Split builder ───────────────────────────────────────────────────────────
+# --- Split builder -----------------------------------------------------------
 
 def build_splits(raw_root: str,
                  processed_dir: str,
@@ -132,12 +132,12 @@ def build_splits(raw_root: str,
                 writer.writerow({"path": str(p), "label": l})
         csv_paths[split] = csv_path
         print(f"  [{split:5s}] {len(paths):5d} samples "
-              f"({sum(labels)} pos / {len(labels)-sum(labels)} neg) → {csv_path}")
+              f"({sum(labels)} pos / {len(labels)-sum(labels)} neg) -> {csv_path}")
 
     return csv_paths
 
 
-# ─── WeightedRandomSampler ───────────────────────────────────────────────────
+# --- WeightedRandomSampler ---------------------------------------------------
 
 def get_weighted_sampler(dataset: XRayDataset) -> WeightedRandomSampler:
     """Over-sample the minority (positive) class each epoch."""
@@ -153,7 +153,7 @@ def get_weighted_sampler(dataset: XRayDataset) -> WeightedRandomSampler:
     return sampler
 
 
-# ─── DataLoader factory ──────────────────────────────────────────────────────
+# --- DataLoader factory ------------------------------------------------------
 
 def get_dataloaders(csv_paths: dict,
                     batch_size: int = 32,

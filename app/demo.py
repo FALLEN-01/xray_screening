@@ -1,6 +1,6 @@
 """
-demo.py — Gradio web app for interactive X-ray baggage screening.
-Drag-and-drop an X-ray image → classification + Grad-CAM overlay.
+demo.py -- Gradio web app for interactive X-ray baggage screening.
+Drag-and-drop an X-ray image -> classification + Grad-CAM overlay.
 
 Usage:
     python app/demo.py
@@ -25,7 +25,7 @@ from src.gradcam import gradcam_single
 from src.synthetic_data import make_prohibited_image, make_safe_image
 
 
-# ─── Global state ────────────────────────────────────────────────────────────
+# --- Global state ------------------------------------------------------------
 
 MODEL  = None
 DEVICE = None
@@ -41,12 +41,12 @@ def _load_model(cfg, ckpt_path):
         load_checkpoint(ckpt_path, MODEL, device=DEVICE)
         print(f"[Demo] Loaded checkpoint: {ckpt_path}")
     else:
-        print("[Demo] No checkpoint found — using random weights (untrained model).")
+        print("[Demo] No checkpoint found -- using random weights (untrained model).")
         print("       Train first: python src/train.py --demo")
     MODEL.eval()
 
 
-# ─── Inference function ──────────────────────────────────────────────────────
+# --- Inference function ------------------------------------------------------
 
 def predict(image):
     """
@@ -54,7 +54,7 @@ def predict(image):
     Returns: (result_label, confidence_str, overlay_pil, json_detail)
     """
     if image is None:
-        return "No image", "—", None, {}
+        return "No image", "--", None, {}
 
     # Save to temp file so gradcam_single can read it
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
@@ -74,10 +74,10 @@ def predict(image):
 
     # Result label with emoji
     if pred_class == "Prohibited":
-        label = "🚨 PROHIBITED ITEM DETECTED"
+        label = "? PROHIBITED ITEM DETECTED"
         color = "red"
     else:
-        label = "✅ BAG IS SAFE"
+        label = "? BAG IS SAFE"
         color = "green"
 
     detail = {
@@ -102,7 +102,7 @@ def generate_demo_image(item_type: str):
     return Image.fromarray(rgb)
 
 
-# ─── Gradio UI ───────────────────────────────────────────────────────────────
+# --- Gradio UI ---------------------------------------------------------------
 
 def build_ui():
     custom_css = """
@@ -119,14 +119,14 @@ def build_ui():
 
         gr.HTML("""
         <div id="title">
-          <h1>🔍 X-Ray Baggage Screening System</h1>
-          <p style="color:#888">ResNet-50 · Grad-CAM · SIXray Dataset</p>
+          <h1>? X-Ray Baggage Screening System</h1>
+          <p style="color:#888">ResNet-50 . Grad-CAM . SIXray Dataset</p>
         </div>
         """)
 
         with gr.Row():
             with gr.Column(scale=1):
-                gr.Markdown("### 📤 Input")
+                gr.Markdown("### ? Input")
                 input_img = gr.Image(
                     type="pil", label="Upload X-Ray Scan",
                     elem_id="input-image",
@@ -138,17 +138,17 @@ def build_ui():
                         label="Quick Demo Image",
                     )
                     gen_btn = gr.Button("Generate Demo", variant="secondary")
-                classify_btn = gr.Button("🔍 Classify", variant="primary",
+                classify_btn = gr.Button("? Classify", variant="primary",
                                          size="lg")
 
             with gr.Column(scale=1):
-                gr.Markdown("### 📊 Results")
+                gr.Markdown("### ? Results")
                 result_label = gr.Label(label="Classification Result",
                                         elem_id="result-label")
                 confidence   = gr.Textbox(label="Confidence", interactive=False)
                 detail_json  = gr.JSON(label="Probability Detail")
 
-        gr.Markdown("### 🔥 Grad-CAM Visualization")
+        gr.Markdown("### ? Grad-CAM Visualization")
         gr.Markdown("*Red regions = areas the model focused on for its decision*")
         overlay_img = gr.Image(label="Grad-CAM Overlay", type="pil")
 
@@ -176,7 +176,7 @@ def build_ui():
     return demo
 
 
-# ─── Entry point ─────────────────────────────────────────────────────────────
+# --- Entry point -------------------------------------------------------------
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

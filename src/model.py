@@ -1,5 +1,5 @@
 """
-model.py — ResNet-50 fine-tuned for X-ray baggage classification.
+model.py -- ResNet-50 fine-tuned for X-ray baggage classification.
 Two-phase strategy:
     Phase 1 (freeze_epochs): train only the new classifier head
     Phase 2 (remaining epochs): unfreeze all layers, lower LR
@@ -13,8 +13,8 @@ from torchvision.models import ResNet50_Weights
 class XRayClassifier(nn.Module):
     """
     ResNet-50 with a custom 2-layer classification head.
-    Input:  (B, 3, 224, 224)  — ImageNet-normalised
-    Output: (B, num_classes)  — raw logits
+    Input:  (B, 3, 224, 224)  -- ImageNet-normalised
+    Output: (B, num_classes)  -- raw logits
     """
 
     def __init__(self, num_classes: int = 2, dropout: float = 0.4,
@@ -44,7 +44,7 @@ class XRayClassifier(nn.Module):
         feat = feat.flatten(1)           # (B, 2048)
         return self.classifier(feat)     # (B, num_classes)
 
-    # ── Two-phase fine-tuning helpers ────────────────────────────────────────
+    # -- Two-phase fine-tuning helpers ----------------------------------------
 
     def freeze_backbone(self):
         """Phase 1: only train the classifier head."""
@@ -52,18 +52,18 @@ class XRayClassifier(nn.Module):
             param.requires_grad = False
         for param in self.classifier.parameters():
             param.requires_grad = True
-        print("[Model] Backbone FROZEN — training head only.")
+        print("[Model] Backbone FROZEN -- training head only.")
 
     def unfreeze_backbone(self):
         """Phase 2: full fine-tuning with lower LR."""
         for param in self.parameters():
             param.requires_grad = True
-        print("[Model] Backbone UNFROZEN — full fine-tuning.")
+        print("[Model] Backbone UNFROZEN -- full fine-tuning.")
 
     def get_gradcam_target_layers(self):
         """Returns target layer list for pytorch-grad-cam."""
         # layer4 is the last residual block of ResNet-50
-        return [self.features[-1][-1]]   # layer4 → last BasicBlock/Bottleneck
+        return [self.features[-1][-1]]   # layer4 -> last BasicBlock/Bottleneck
 
     def count_params(self) -> dict:
         total = sum(p.numel() for p in self.parameters())

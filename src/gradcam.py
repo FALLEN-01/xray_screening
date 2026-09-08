@@ -1,5 +1,5 @@
 """
-gradcam.py — Grad-CAM visualizations for the ResNet-50 X-ray classifier.
+gradcam.py -- Grad-CAM visualizations for the ResNet-50 X-ray classifier.
 Generates side-by-side: Original | Heatmap | Overlay
 Saves PNG grid to outputs/visualizations/
 
@@ -34,7 +34,7 @@ CLASS_NAMES = ["Safe", "Prohibited"]
 LABEL_COLOR = {"Safe": "#4CAF50", "Prohibited": "#F44336"}
 
 
-# ─── Single image Grad-CAM ───────────────────────────────────────────────────
+# --- Single image Grad-CAM ---------------------------------------------------
 
 def gradcam_single(model, image_path: str, device,
                    image_size: int = 224, alpha: float = 0.5):
@@ -54,7 +54,7 @@ def gradcam_single(model, image_path: str, device,
     target_layers = model.get_gradcam_target_layers()
     with GradCAM(model=model, target_layers=target_layers) as cam:
         grayscale_cam = cam(input_tensor=input_tensor,
-                            targets=None)          # targets=None → predicted class
+                            targets=None)          # targets=None -> predicted class
         grayscale_cam = grayscale_cam[0]           # (H, W)
 
     # Overlay
@@ -73,7 +73,7 @@ def gradcam_single(model, image_path: str, device,
             CLASS_NAMES[pred], conf)
 
 
-# ─── Batch visualization ─────────────────────────────────────────────────────
+# --- Batch visualization -----------------------------------------------------
 
 def visualize_batch(model, loader, device, save_dir: str,
                     n_samples: int = 16,
@@ -138,7 +138,7 @@ def _save_grid(results, save_dir, n_samples, image_size):
     if rows == 1:
         axes = axes[np.newaxis, :]
 
-    fig.suptitle("Grad-CAM Visualizations — X-Ray Baggage Screening",
+    fig.suptitle("Grad-CAM Visualizations -- X-Ray Baggage Screening",
                  fontsize=13, fontweight="bold", y=1.01)
 
     col_titles = ["Original X-Ray", "Grad-CAM Heatmap", "Overlay"]
@@ -170,7 +170,7 @@ def _save_grid(results, save_dir, n_samples, image_size):
     path = os.path.join(save_dir, "gradcam_grid.png")
     plt.savefig(path, dpi=150, bbox_inches="tight")
     plt.close()
-    print(f"[GradCAM] Grid saved → {path}")
+    print(f"[GradCAM] Grid saved -> {path}")
 
     # Separate correct vs. incorrect
     correct = [r for r in results if r["correct"]]
@@ -179,7 +179,7 @@ def _save_grid(results, save_dir, n_samples, image_size):
           f"out of {len(results)} samples.")
 
 
-# ─── Main ────────────────────────────────────────────────────────────────────
+# --- Main --------------------------------------------------------------------
 
 def run_gradcam(cfg: dict, ckpt_path: str, single_image: str = None):
     device  = get_device(cfg)
@@ -207,7 +207,7 @@ def run_gradcam(cfg: dict, ckpt_path: str, single_image: str = None):
         out = os.path.join(viz_dir, "gradcam_single.png")
         plt.savefig(out, dpi=150, bbox_inches="tight")
         plt.close()
-        print(f"[GradCAM] {pred_class} ({conf:.1%})  →  {out}")
+        print(f"[GradCAM] {pred_class} ({conf:.1%})  ->  {out}")
         return
 
     # Batch mode from test set

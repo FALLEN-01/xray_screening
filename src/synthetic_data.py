@@ -1,5 +1,5 @@
 """
-synthetic_data.py — Generates synthetic X-ray-like images for demo/testing.
+synthetic_data.py -- Generates synthetic X-ray-like images for demo/testing.
 Mirrors the real SIXray folder structure so every other module works unchanged.
 """
 import os
@@ -101,8 +101,8 @@ def generate_synthetic_dataset(root: str,
                                 image_size: int = 224):
     """
     Generates synthetic X-ray images under:
-        root/positive/  — images with prohibited items
-        root/negative/  — safe bag images
+        root/positive/  -- images with prohibited items
+        root/negative/  -- safe bag images
     """
     pos_dir = Path(root) / "positive"
     neg_dir = Path(root) / "negative"
@@ -114,13 +114,13 @@ def generate_synthetic_dataset(root: str,
     existing_neg = len(list(neg_dir.glob("*.png")))
     if existing_pos >= n_positive and existing_neg >= n_negative:
         print(f"[SyntheticData] Already exists: {existing_pos} pos, "
-              f"{existing_neg} neg — skipping generation.")
+              f"{existing_neg} neg -- skipping generation.")
         return
 
     print(f"[SyntheticData] Generating {n_positive} positive images...")
     for i in tqdm(range(n_positive), desc="Positive"):
         arr = make_prohibited_image(image_size, image_size)
-        # Convert grayscale → RGB (3-channel) for consistency
+        # Convert grayscale -> RGB (3-channel) for consistency
         rgb = np.stack([arr, arr, arr], axis=-1)
         Image.fromarray(rgb).save(pos_dir / f"pos_{i:05d}.png")
 

@@ -1,13 +1,13 @@
 """
-evaluate.py — Full test-set evaluation:
-  • Per-class precision, recall, F1
-  • Weighted + macro averages
-  • Confusion matrix (raw + normalized)
-  • ROC curve + AUC
-  • Precision-Recall curve + Average Precision
-  • Threshold sweep to maximize F1
-  • Saves all plots to outputs/visualizations/
-  • Exports JSON metrics report
+evaluate.py -- Full test-set evaluation:
+  * Per-class precision, recall, F1
+  * Weighted + macro averages
+  * Confusion matrix (raw + normalized)
+  * ROC curve + AUC
+  * Precision-Recall curve + Average Precision
+  * Threshold sweep to maximize F1
+  * Saves all plots to outputs/visualizations/
+  * Exports JSON metrics report
 
 Usage:
     python src/evaluate.py
@@ -42,7 +42,7 @@ CLASS_NAMES = ["Safe", "Prohibited"]
 PALETTE     = ["#4CAF50", "#F44336"]      # green=safe, red=prohibited
 
 
-# ─── Inference pass ───────────────────────────────────────────────────────────
+# --- Inference pass -----------------------------------------------------------
 
 def get_predictions(model, loader, device):
     model.eval()
@@ -61,7 +61,7 @@ def get_predictions(model, loader, device):
             np.array(all_preds))
 
 
-# ─── Plot helpers ─────────────────────────────────────────────────────────────
+# --- Plot helpers -------------------------------------------------------------
 
 def plot_confusion_matrix(cm, save_path):
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
@@ -94,7 +94,7 @@ def plot_roc(labels, probs, save_path):
             label=f"ROC (AUC = {roc_auc:.4f})")
     ax.plot([0, 1], [0, 1], "--", color="grey", lw=1)
     ax.set_xlabel("False Positive Rate"); ax.set_ylabel("True Positive Rate")
-    ax.set_title("ROC Curve — Prohibited Item Detection")
+    ax.set_title("ROC Curve -- Prohibited Item Detection")
     ax.legend(loc="lower right"); ax.grid(alpha=0.3)
     plt.tight_layout()
     plt.savefig(save_path, dpi=150, bbox_inches="tight")
@@ -112,7 +112,7 @@ def plot_pr_curve(labels, probs, save_path):
     ax.axhline(labels.mean(), ls="--", color="grey", lw=1,
                label="Baseline (prevalence)")
     ax.set_xlabel("Recall"); ax.set_ylabel("Precision")
-    ax.set_title("Precision-Recall Curve — Prohibited Item Detection")
+    ax.set_title("Precision-Recall Curve -- Prohibited Item Detection")
     ax.legend(); ax.grid(alpha=0.3)
     plt.tight_layout()
     plt.savefig(save_path, dpi=150, bbox_inches="tight")
@@ -140,7 +140,7 @@ def plot_threshold_sweep(labels, probs, save_path):
     ax.axvline(best_t, color="black", ls=":", lw=1.5,
                label=f"Best threshold = {best_t:.2f}")
     ax.set_xlabel("Decision Threshold"); ax.set_ylabel("Score")
-    ax.set_title("Threshold Sweep — F1 / Precision / Recall")
+    ax.set_title("Threshold Sweep -- F1 / Precision / Recall")
     ax.legend(); ax.grid(alpha=0.3)
     plt.tight_layout()
     plt.savefig(save_path, dpi=150, bbox_inches="tight")
@@ -171,18 +171,18 @@ def plot_per_class_metrics(report_dict, save_path):
     print(f"  Saved: {save_path}")
 
 
-# ─── Main ────────────────────────────────────────────────────────────────────
+# --- Main --------------------------------------------------------------------
 
 def evaluate(cfg: dict, ckpt_path: str):
     device = get_device(cfg)
     viz_dir = cfg["outputs"]["viz_dir"]
     os.makedirs(viz_dir, exist_ok=True)
 
-    # ── Load model ───────────────────────────────────────────────────────────
+    # -- Load model -----------------------------------------------------------
     model = build_model(cfg).to(device)
     load_checkpoint(ckpt_path, model, device=device)
 
-    # ── Test data ────────────────────────────────────────────────────────────
+    # -- Test data ------------------------------------------------------------
     csv_paths = build_splits(
         raw_root      = cfg["dataset"]["root"],
         processed_dir = cfg["dataset"]["processed"],
@@ -197,10 +197,10 @@ def evaluate(cfg: dict, ckpt_path: str):
     )
     test_loader = loaders["test"]
 
-    # ── Predictions ──────────────────────────────────────────────────────────
+    # -- Predictions ----------------------------------------------------------
     labels, probs, preds = get_predictions(model, test_loader, device)
 
-    # ── Classification report ─────────────────────────────────────────────────
+    # -- Classification report -------------------------------------------------
     report_str  = classification_report(labels, preds,
                                         target_names=CLASS_NAMES,
                                         digits=4)
@@ -212,7 +212,7 @@ def evaluate(cfg: dict, ckpt_path: str):
     print("=" * 55)
     print(report_str)
 
-    # ── Plots ────────────────────────────────────────────────────────────────
+    # -- Plots ----------------------------------------------------------------
     cm      = confusion_matrix(labels, preds)
     roc_auc = plot_roc(labels, probs,
                        os.path.join(viz_dir, "roc_curve.png"))
@@ -225,7 +225,7 @@ def evaluate(cfg: dict, ckpt_path: str):
     plot_per_class_metrics(report_dict,
                            os.path.join(viz_dir, "per_class_metrics.png"))
 
-    # ── JSON report ──────────────────────────────────────────────────────────
+    # -- JSON report ----------------------------------------------------------
     metrics = {
         "roc_auc":           round(float(roc_auc), 4),
         "average_precision": round(float(ap), 4),
@@ -236,7 +236,7 @@ def evaluate(cfg: dict, ckpt_path: str):
     report_path = os.path.join(viz_dir, "metrics_report.json")
     with open(report_path, "w") as f:
         json.dump(metrics, f, indent=2)
-    print(f"\nMetrics saved → {report_path}")
+    print(f"\nMetrics saved -> {report_path}")
     print(f"ROC-AUC = {roc_auc:.4f}  |  AP = {ap:.4f}  "
           f"|  Best threshold = {best_t:.2f}  (F1={best_f1:.4f})")
 

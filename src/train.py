@@ -1,12 +1,12 @@
 """
-train.py — Full training loop with:
-  • Focal Loss (handles class imbalance at loss level)
-  • WeightedRandomSampler (handles imbalance at sampling level)
-  • Two-phase fine-tuning (Phase 1: frozen backbone → Phase 2: full)
-  • Cosine annealing LR scheduler with linear warmup
-  • Early stopping on val F1 (prohibited-item class)
-  • TensorBoard + CSV logging
-  • Best-model checkpointing
+train.py -- Full training loop with:
+  * Focal Loss (handles class imbalance at loss level)
+  * WeightedRandomSampler (handles imbalance at sampling level)
+  * Two-phase fine-tuning (Phase 1: frozen backbone -> Phase 2: full)
+  * Cosine annealing LR scheduler with linear warmup
+  * Early stopping on val F1 (prohibited-item class)
+  * TensorBoard + CSV logging
+  * Best-model checkpointing
 
 Usage:
     python src/train.py                        # uses config.yaml
@@ -35,7 +35,7 @@ from src.model import build_model
 from src.dataset import build_splits, get_dataloaders
 
 
-# ─── Focal Loss ──────────────────────────────────────────────────────────────
+# --- Focal Loss --------------------------------------------------------------
 
 class FocalLoss(nn.Module):
     """
@@ -61,7 +61,7 @@ class FocalLoss(nn.Module):
         return loss.mean()
 
 
-# ─── LR warmup scheduler ─────────────────────────────────────────────────────
+# --- LR warmup scheduler -----------------------------------------------------
 
 class WarmupCosineScheduler:
     def __init__(self, optimizer, warmup_epochs, total_epochs, base_lr):
@@ -83,7 +83,7 @@ class WarmupCosineScheduler:
         return lr
 
 
-# ─── One-epoch helpers ───────────────────────────────────────────────────────
+# --- One-epoch helpers -------------------------------------------------------
 
 def run_epoch(model, loader, criterion, optimizer, device, is_train: bool):
     model.train() if is_train else model.eval()
@@ -124,7 +124,7 @@ def run_epoch(model, loader, criterion, optimizer, device, is_train: bool):
     return avg_loss, acc, prec, rec, f1
 
 
-# ─── Main training function ──────────────────────────────────────────────────
+# --- Main training function --------------------------------------------------
 
 def train(cfg: dict):
     set_seed(42)
@@ -137,7 +137,7 @@ def train(cfg: dict):
     logger  = setup_logger("train", log_dir)
     writer  = SummaryWriter(log_dir=log_dir)
 
-    # ── Data ─────────────────────────────────────────────────────────────────
+    # -- Data -----------------------------------------------------------------
     csv_paths = build_splits(
         raw_root      = cfg["dataset"]["root"],
         processed_dir = cfg["dataset"]["processed"],
@@ -151,17 +151,17 @@ def train(cfg: dict):
         use_weighted_sampler = cfg["training"]["use_weighted_sampler"],
     )
 
-    # ── Model ────────────────────────────────────────────────────────────────
+    # -- Model ----------------------------------------------------------------
     model = build_model(cfg).to(device)
 
-    # ── Loss ─────────────────────────────────────────────────────────────────
+    # -- Loss -----------------------------------------------------------------
     criterion = FocalLoss(
         alpha      = cfg["training"]["focal_loss_alpha"],
         gamma      = cfg["training"]["focal_loss_gamma"],
         num_classes= cfg["model"]["num_classes"],
     )
 
-    # ── Optimizer & Scheduler ────────────────────────────────────────────────
+    # -- Optimizer & Scheduler ------------------------------------------------
     optimizer = optim.AdamW(
         filter(lambda p: p.requires_grad, model.parameters()),
         lr           = cfg["training"]["lr"],
@@ -174,10 +174,10 @@ def train(cfg: dict):
         base_lr       = cfg["training"]["lr"],
     )
 
-    # ── Phase 1: freeze backbone ──────────────────────────────────────────────
+    # -- Phase 1: freeze backbone ----------------------------------------------
     model.freeze_backbone()
 
-    # ── CSV log ───────────────────────────────────────────────────────────────
+    # -- CSV log ---------------------------------------------------------------
     csv_log_path = os.path.join(log_dir, "training_log.csv")
     csv_fields   = ["epoch", "phase", "lr",
                     "train_loss", "train_acc", "train_prec",
@@ -194,7 +194,7 @@ def train(cfg: dict):
     patience         = cfg["training"]["early_stop_patience"]
 
     logger.info("=" * 60)
-    logger.info("  X-Ray Baggage Screening — Training Start")
+    logger.info("  X-Ray Baggage Screening -- Training Start")
     logger.info("=" * 60)
 
     for epoch in range(total_epochs):
@@ -264,7 +264,7 @@ def train(cfg: dict):
                 "best_f1": best_val_f1,
                 "val_recall": vl_rec,
             }, cfg["outputs"]["best_model"])
-            logger.info(f"  ✓ Best model saved  (val_f1={best_val_f1:.4f})")
+            logger.info(f"  [BEST] Model saved  (val_f1={best_val_f1:.4f})")
         else:
             patience_counter += 1
             if patience_counter >= patience:
@@ -274,10 +274,10 @@ def train(cfg: dict):
 
     writer.close()
     logger.info(f"Training complete. Best val F1 = {best_val_f1:.4f}")
-    logger.info(f"Best model → {cfg['outputs']['best_model']}")
+    logger.info(f"Best model -> {cfg['outputs']['best_model']}")
 
 
-# ─── Entry point ─────────────────────────────────────────────────────────────
+# --- Entry point -------------------------------------------------------------
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
