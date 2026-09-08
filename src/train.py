@@ -202,15 +202,25 @@ def train(cfg: dict):
         # Switch to Phase 2 after freeze_epochs
         if epoch == freeze_epochs:
             model.unfreeze_backbone()
-            # Lower LR for full fine-tuning
-            for pg in optimizer.param_groups:
-                pg["lr"] = cfg["training"]["lr"] * 0.1
-            optimizer.add_param_group({
-                "params": model.features.parameters(),
-                "lr": cfg["training"]["lr"] * 0.01,
-            })
+            # Rebuild optimizer cleanly with differential LRs:
+            #   backbone: very low LR to preserve ImageNet features
+            #   head:     moderate LR for task-specific learning
+            optimizer = optim.AdamW([
+                {"params": model.features.parameters(),
+                 "lr": cfg["training"]["lr"] * 0.01},
+                {"params": model.classifier.parameters(),
+                 "lr": cfg["training"]["lr"] * 0.1},
+            ], weight_decay=cfg["training"]["weight_decay"])
+            # Reset scheduler for Phase 2
+            scheduler = WarmupCosineScheduler(
+                optimizer     = optimizer,
+                warmup_epochs = 1,
+                total_epochs  = total_epochs - freeze_epochs,
+                base_lr       = cfg["training"]["lr"] * 0.1,
+            )
 
-        lr = scheduler.step(epoch)
+        sched_epoch = epoch if epoch < freeze_epochs else epoch - freeze_epochs
+        lr = scheduler.step(sched_epoch)
         phase = "freeze" if epoch < freeze_epochs else "finetune"
 
         # Train

@@ -61,9 +61,15 @@ class XRayClassifier(nn.Module):
         print("[Model] Backbone UNFROZEN -- full fine-tuning.")
 
     def get_gradcam_target_layers(self):
-        """Returns target layer list for pytorch-grad-cam."""
-        # layer4 is the last residual block of ResNet-50
-        return [self.features[-1][-1]]   # layer4 -> last BasicBlock/Bottleneck
+        """Returns target layer list for pytorch-grad-cam.
+        ResNet-50 children (in features Sequential):
+          [0] conv1, [1] bn1, [2] relu, [3] maxpool,
+          [4] layer1, [5] layer2, [6] layer3, [7] layer4,
+          [8] avgpool   <- features[-1], NOT what we want
+        We want layer4 = features[-2], specifically its last Bottleneck block.
+        """
+        layer4 = self.features[-2]   # layer4 (Sequential of Bottleneck blocks)
+        return [layer4[-1]]          # last Bottleneck in layer4
 
     def count_params(self) -> dict:
         total = sum(p.numel() for p in self.parameters())

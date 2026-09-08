@@ -1,127 +1,150 @@
-# 🔍 X-Ray Baggage Screening System
+# X-Ray Baggage Screening System
 
-A deep learning classification system for detecting **prohibited items** (knives, guns, scissors) in X-ray baggage scans, built as a lab/minor project using the **SIXray dataset** and **ResNet-50**.
+> **Deep learning classification of prohibited items in X-ray baggage scans**  
+> ResNet-50 · SIXray Dataset · Focal Loss · Grad-CAM · Gradio Demo
 
 ---
 
-## 📌 Features
+## Table of Contents
 
-| Feature | Detail |
+- [Overview](#overview)
+- [Project Structure](#project-structure)
+- [Quick Start](#quick-start)
+- [Step-by-Step Usage](#step-by-step-usage)
+- [Using Real SIXray Data](#using-real-sixray-data)
+- [Results](#results)
+- [Architecture](#architecture)
+- [Class Imbalance Strategy](#class-imbalance-strategy)
+- [Output Files](#output-files)
+- [Citation](#citation)
+
+---
+
+## Overview
+
+Automated screening of X-ray baggage images is critical for aviation and public security, yet manual inspection remains time-consuming and prone to human fatigue-induced error.
+
+This project presents a deep learning classification system for detecting **prohibited items** (knives, guns, scissors) in X-ray baggage scans using:
+
+| Component | Detail |
 |---|---|
-| **Model** | ResNet-50, ImageNet pretrained, fine-tuned |
-| **Dataset** | SIXray (or synthetic demo mode) |
+| **Backbone** | ResNet-50, ImageNet pretrained |
+| **Dataset** | SIXray (or built-in synthetic demo) |
 | **Imbalance** | Focal Loss + WeightedRandomSampler |
-| **Interpretability** | Grad-CAM heatmaps |
+| **Fine-tuning** | Two-phase: head-only → full model |
+| **Interpretability** | Grad-CAM heatmaps on test images |
 | **Metrics** | Precision, Recall, F1, ROC-AUC, PR curve |
 | **Demo** | Gradio web app (drag-and-drop) |
 
 ---
 
-## 🚀 Quick Start
+## Project Structure
+
+```
+xray_screening/
+├── config.yaml              <- All hyperparameters in one place
+├── run_pipeline.py          <- One-command end-to-end runner
+├── requirements.txt         <- Python dependencies
+├── README.md
+│
+├── src/
+│   ├── utils.py             <- Config loader, device setup, checkpoints
+│   ├── synthetic_data.py    <- Synthetic X-ray generator (knife/gun/scissors)
+│   ├── dataset.py           <- SIXray-compatible dataset, splits, sampler
+│   ├── model.py             <- ResNet-50 + custom head + Grad-CAM target
+│   ├── train.py             <- Focal Loss, warmup cosine LR, early stopping
+│   ├── evaluate.py          <- P/R/F1, confusion matrix, ROC, PR, threshold sweep
+│   └── gradcam.py           <- Grad-CAM batch + single-image visualization
+│
+├── app/
+│   └── demo.py              <- Gradio web demo (localhost:7860)
+│
+├── notebooks/
+│   └── analysis.ipynb       <- EDA, training curves, metrics, Grad-CAM viewer
+│
+├── data/
+│   └── raw/
+│       ├── positive/        <- Drop SIXray prohibited images here
+│       └── negative/        <- Drop SIXray safe images here
+│
+└── outputs/
+    ├── checkpoints/         <- Saved model weights (best_model.pth)
+    ├── logs/                <- TensorBoard events + training_log.csv
+    └── visualizations/      <- Confusion matrix, ROC, Grad-CAM grid, etc.
+```
+
+---
+
+## Quick Start
 
 ### 1. Install dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Run full pipeline (synthetic demo data — no download needed)
+> PyTorch with CUDA (RTX support):
+> ```bash
+> pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
+> ```
+
+### 2. Run full pipeline (no dataset download needed)
+
 ```bash
+cd "D:\New folder\xray_screening"
 python run_pipeline.py
 ```
 
-### 3. Train only
+This will automatically:
+1. Generate 800 synthetic prohibited + 4000 safe X-ray images
+2. Train ResNet-50 (two-phase: head → full fine-tune)
+3. Evaluate on test set (P/R/F1, ROC, PR curves)
+4. Generate Grad-CAM visualizations
+
+---
+
+## Step-by-Step Usage
+
+### Train
+
 ```bash
-python src/train.py --demo       # generates synthetic data + trains
+# With synthetic demo data (auto-generated)
+python src/train.py --demo
+
+# With real SIXray data (set synthetic_demo: false in config.yaml first)
+python src/train.py
 ```
 
-### 4. Evaluate
+### Evaluate
+
 ```bash
 python src/evaluate.py
+# Outputs: confusion_matrix.png, roc_curve.png, pr_curve.png,
+#          threshold_sweep.png, per_class_metrics.png, metrics_report.json
 ```
 
-### 5. Grad-CAM visualizations
+### Grad-CAM Visualizations
+
 ```bash
+# Batch mode (samples from test set)
 python src/gradcam.py
-python src/gradcam.py --image path/to/scan.jpg   # single image
+
+# Single image
+python src/gradcam.py --image path/to/scan.jpg
 ```
 
-### 6. Launch web demo
+### Launch Web Demo
+
 ```bash
 python app/demo.py
 ```
-Open `http://localhost:7860`
 
----
+Open **http://localhost:7860** — drag-and-drop any X-ray image to get:
+- Classification result (Safe / Prohibited)
+- Confidence score
+- Grad-CAM heatmap overlay
 
-## 📁 Project Structure
-
-```
-xray_screening/
-├── config.yaml              ← All hyperparameters
-├── run_pipeline.py          ← One-command end-to-end runner
-├── requirements.txt
-├── src/
-│   ├── dataset.py           ← SIXray-compatible dataset, splits, sampler
-│   ├── model.py             ← ResNet-50 with custom head + Grad-CAM hook
-│   ├── train.py             ← Focal Loss, two-phase fine-tuning, TensorBoard
-│   ├── evaluate.py          ← Full metrics, plots, JSON report
-│   ├── gradcam.py           ← Grad-CAM batch + single-image visualization
-│   ├── synthetic_data.py    ← Synthetic X-ray generator (demo mode)
-│   └── utils.py             ← Config, logging, checkpoints
-├── app/
-│   └── demo.py              ← Gradio web demo
-├── data/
-│   └── raw/
-│       ├── positive/        ← Drop SIXray prohibited images here
-│       └── negative/        ← Drop SIXray safe images here
-└── outputs/
-    ├── checkpoints/         ← Saved model weights
-    ├── logs/                ← TensorBoard + CSV logs
-    └── visualizations/      ← Confusion matrix, ROC, Grad-CAM grid
-```
-
----
-
-## 📊 Using Real SIXray Data
-
-1. Download from [MeioJane/SIXray](https://github.com/MeioJane/SIXray) (academic use only)
-2. Place positive images (gun/knife/wrench/pliers/scissors) → `data/raw/positive/`
-3. Place negative images → `data/raw/negative/`
-4. Set `synthetic_demo: false` in `config.yaml`
-5. Run: `python src/train.py`
-
----
-
-## 🔬 Class Imbalance Strategy
-
-SIXray has ~1:5 to 1:1000 positive-to-negative ratio. We address this with:
-
-1. **Focal Loss** (γ=2): reduces gradient from easy negatives
-2. **WeightedRandomSampler**: each batch has balanced class representation
-3. **CLAHE augmentation**: enhances low-contrast prohibited item features
-4. **Threshold tuning**: sweeps decision threshold to maximize recall ≥ 0.95
-
----
-
-## 📈 Outputs
-
-After running the pipeline:
-
-| File | Contents |
-|---|---|
-| `outputs/checkpoints/best_model.pth` | Best model by val F1 |
-| `outputs/logs/training_log.csv` | Per-epoch metrics |
-| `outputs/visualizations/confusion_matrix.png` | Raw + normalized CM |
-| `outputs/visualizations/roc_curve.png` | ROC + AUC |
-| `outputs/visualizations/pr_curve.png` | Precision-Recall curve |
-| `outputs/visualizations/threshold_sweep.png` | F1/P/R vs threshold |
-| `outputs/visualizations/per_class_metrics.png` | Bar chart per class |
-| `outputs/visualizations/gradcam_grid.png` | Grad-CAM overlays |
-| `outputs/visualizations/metrics_report.json` | All metrics as JSON |
-
----
-
-## 🖥️ TensorBoard
+### TensorBoard
 
 ```bash
 tensorboard --logdir outputs/logs
@@ -129,7 +152,127 @@ tensorboard --logdir outputs/logs
 
 ---
 
-## 📝 Citation
+## Using Real SIXray Data
 
-If using SIXray data:
-> Miao, C., Xie, L., Wan, F., Su, C., Liu, H., Jiao, J., & Ye, Q. (2019). SIXray: A Large-scale Security Inspection X-Ray Benchmark for Prohibited Item Discovery in Overlapping Images. CVPR 2019.
+1. **Download** from [MeioJane/SIXray](https://github.com/MeioJane/SIXray) *(academic use only)*
+2. **Place images**:
+   - Prohibited images (gun/knife/wrench/pliers/scissors) → `data/raw/positive/`
+   - Safe bag images → `data/raw/negative/`
+3. **Update config** — set `synthetic_demo: false` in `config.yaml`
+4. **Run training**:
+   ```bash
+   python src/train.py
+   ```
+
+Supported image formats: `.jpg`, `.jpeg`, `.png`, `.bmp`, `.tif`
+
+---
+
+## Results
+
+Training results on synthetic SIXray-like dataset (800 prohibited / 4000 safe):
+
+### Training Curves
+
+| Epoch | Phase | Train Loss | Train F1 | Val F1 |
+|---|---|---|---|---|
+| 1 | freeze | 0.0238 | 0.873 | 1.000 |
+| 2 | freeze | 0.0178 | 0.927 | 1.000 |
+| 3 | freeze | 0.0128 | 0.941 | 1.000 |
+| 4 | freeze | 0.0124 | 0.949 | 1.000 |
+| 5 | freeze | 0.0096 | 0.961 | 1.000 |
+| 6 | finetune | 0.0026 | 0.991 | 1.000 |
+| 7 | finetune | 0.0018 | 0.996 | 1.000 |
+| 8 | finetune | 0.0014 | 0.997 | 1.000 |
+| **9** | **finetune** | **0.0014** | **0.998** | **1.000** |
+
+*Early stopped at epoch 9 (patience=8, no improvement).*
+
+### Test Set Metrics (720 images)
+
+| Class | Precision | Recall | F1-Score | Support |
+|---|---|---|---|---|
+| Safe | 1.000 | 1.000 | 1.000 | 600 |
+| Prohibited | 1.000 | 1.000 | 1.000 | 120 |
+| **Weighted avg** | **1.000** | **1.000** | **1.000** | **720** |
+
+**ROC-AUC = 1.0000 · Average Precision = 1.0000 · Best threshold = 0.16**
+
+> On real SIXray data with overlapping/occluded objects, expect realistic F1 of 0.85–0.95, which is the actual research challenge addressed by this system.
+
+---
+
+## Architecture
+
+```
+Input (224x224x3)
+      |
+ResNet-50 Backbone (ImageNet pretrained)
+  └── conv1 → bn1 → relu → maxpool
+  └── layer1 → layer2 → layer3 → layer4   <-- Grad-CAM target
+  └── AdaptiveAvgPool2d
+      |
+   [2048-dim features]
+      |
+Custom Classification Head
+  └── Dropout(0.4)
+  └── Linear(2048 → 512) + ReLU
+  └── Dropout(0.2)
+  └── Linear(512 → 2)   [Safe | Prohibited]
+      |
+   Logits → Softmax → Prediction
+```
+
+### Two-Phase Fine-Tuning
+
+| Phase | Epochs | Backbone | Head LR | Backbone LR |
+|---|---|---|---|---|
+| 1 — Feature Extraction | 1–5 | Frozen | 1e-3 | — |
+| 2 — Full Fine-Tune | 6+ | Unfrozen | 1e-4 | 1e-5 |
+
+---
+
+## Class Imbalance Strategy
+
+SIXray has a ~1:5 to 1:1000 positive-to-negative ratio. This project addresses it with:
+
+| Strategy | Implementation |
+|---|---|
+| **WeightedRandomSampler** | Each batch over-samples the positive class |
+| **Focal Loss** (γ=2, α=0.25) | Reduces gradient from easy negatives |
+| **CLAHE augmentation** | Enhances low-contrast item features |
+| **Two-phase fine-tuning** | Prevents early feature corruption |
+| **Threshold tuning** | Sweeps 0.01–0.99 to maximize recall |
+
+---
+
+## Output Files
+
+| File | Description |
+|---|---|
+| `outputs/checkpoints/best_model.pth` | Best model by validation F1 |
+| `outputs/logs/training_log.csv` | Per-epoch metrics (all phases) |
+| `outputs/visualizations/confusion_matrix.png` | Raw + normalized confusion matrix |
+| `outputs/visualizations/roc_curve.png` | ROC curve + AUC |
+| `outputs/visualizations/pr_curve.png` | Precision-Recall curve + AP |
+| `outputs/visualizations/threshold_sweep.png` | F1/P/R vs decision threshold |
+| `outputs/visualizations/per_class_metrics.png` | Bar chart per class |
+| `outputs/visualizations/gradcam_grid.png` | Grad-CAM overlays (test samples) |
+| `outputs/visualizations/metrics_report.json` | All metrics exported as JSON |
+
+---
+
+## Citation
+
+If using SIXray data, please cite:
+
+```bibtex
+@InProceedings{Miao_2019_CVPR,
+  author    = {Miao, Caijing and Xie, Lingxi and Wan, Fang and Su, Chi
+               and Liu, Hongye and Jiao, Jianbin and Ye, Qixiang},
+  title     = {SIXray: A Large-Scale Security Inspection X-Ray Benchmark
+               for Prohibited Item Discovery in Overlapping Images},
+  booktitle = {CVPR},
+  year      = {2019}
+}
+```
