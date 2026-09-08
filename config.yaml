@@ -1,0 +1,52 @@
+# ─────────────────────────────────────────────
+#  X-Ray Baggage Screening — Configuration
+# ─────────────────────────────────────────────
+
+# Dataset
+dataset:
+  root: "data/raw"                 # drop SIXray positive/ negative/ here
+  processed: "data/processed"
+  positive_dir: "positive"
+  negative_dir: "negative"
+  train_ratio: 0.70
+  val_ratio: 0.15
+  test_ratio: 0.15
+  image_size: 224
+  synthetic_demo: true             # set false when real SIXray data is present
+  synthetic_pos: 800
+  synthetic_neg: 4000              # mirrors SIXray10 ~1:5 imbalance
+
+# Model
+model:
+  backbone: "resnet50"
+  num_classes: 2                   # 0=safe, 1=prohibited
+  pretrained: true
+  dropout: 0.4
+  freeze_epochs: 5                 # phase-1: only train head
+
+# Training
+training:
+  epochs: 30
+  batch_size: 32
+  lr: 0.001
+  weight_decay: 0.0001
+  focal_loss_gamma: 2.0
+  focal_loss_alpha: 0.25
+  scheduler: "cosine"
+  warmup_epochs: 2
+  early_stop_patience: 8
+  use_weighted_sampler: true
+  device: "cuda"                   # auto-falls back to cpu
+
+# Grad-CAM
+gradcam:
+  target_layer: "layer4"          # ResNet-50 last conv block
+  num_visualize: 16               # images to visualize from test set
+  alpha: 0.5                      # heatmap overlay transparency
+
+# Outputs
+outputs:
+  checkpoint_dir: "outputs/checkpoints"
+  log_dir: "outputs/logs"
+  viz_dir: "outputs/visualizations"
+  best_model: "outputs/checkpoints/best_model.pth"
