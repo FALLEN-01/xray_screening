@@ -39,3 +39,5 @@ Thumbs.db
 # Gradio temp
 gradio_cached_examples/
 flagged/
+
+data/
