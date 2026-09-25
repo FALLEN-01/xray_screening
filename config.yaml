@@ -33,4 +33,4 @@ inference:
 # Outputs
 outputs:
   viz_dir: "outputs/visualizations"
-  best_model: "outputs/checkpoints/detector/weights/best.pt"
+  best_model: "runs/detect/outputs/checkpoints/detector/weights/best.pt"
