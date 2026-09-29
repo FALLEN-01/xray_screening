@@ -11,12 +11,12 @@ dataset:
 
 # Model
 model:
-  weights: "yolov8n.pt"
+  weights: "runs/detect/outputs/checkpoints/detector/weights/best.pt"  # fine-tune from last best checkpoint
 
 # Training
 training:
   epochs: 50
-  batch_size: 16
+  batch_size: 32
   workers: 2
   device: "cuda"                   # uses CPU automatically when CUDA is unavailable
   patience: 10

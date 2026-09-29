@@ -29,7 +29,9 @@ def train(cfg: dict):
         raise FileNotFoundError(f"Dataset YAML not found: {dataset_yaml}")
 
     device = resolve_device(cfg["training"].get("device", "cuda"))
-    model = YOLO(cfg["model"]["weights"])
+    patience = cfg["training"].get("patience", 10)
+    print(f"[Train] Loading weights from: {cfg['model']['weights']}")
+    print(f"[Train] Early stopping active — patience={patience} epochs")
     model.train(
         data=dataset_yaml,
         epochs=cfg["training"]["epochs"],
@@ -37,10 +39,10 @@ def train(cfg: dict):
         batch=cfg["training"]["batch_size"],
         workers=cfg["training"].get("workers", 2),
         device=device,
-        patience=cfg["training"].get("patience", 10),
+        patience=patience,
         project=cfg["training"]["project"],
         name=cfg["training"]["name"],
-        exist_ok=True,
+        exist_ok=False,   # auto-increment folder (detector, detector2, …) — never overwrite
         pretrained=True,
         seed=42,
     )
