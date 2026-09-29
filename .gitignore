@@ -3,10 +3,28 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+*.so
 .Python
+*.egg
 *.egg-info/
+.eggs/
 dist/
 build/
+pip-log.txt
+
+# Testing & coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.hypothesis/
+
+# Type checkers
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
 
 # Virtual environments
 venv/
@@ -39,5 +57,8 @@ Thumbs.db
 # Gradio temp
 gradio_cached_examples/
 flagged/
+
+# Large files / archives
+*.zip
 
 data/
