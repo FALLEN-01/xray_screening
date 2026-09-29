@@ -13,7 +13,7 @@ cache: false
 device: '0'
 workers: 2
 project: outputs/checkpoints
-name: detector-2
+name: detector-4
 exist_ok: false
 pretrained: true
 cls_remap: true
@@ -111,4 +111,4 @@ auto_augment: randaugment
 erasing: 0.4
 cfg: null
 tracker: tracktrack.yaml
-save_dir: D:\xray_screening\runs\detect\outputs\checkpoints\detector-2
+save_dir: D:\xray_screening\runs\detect\outputs\checkpoints\detector-4
