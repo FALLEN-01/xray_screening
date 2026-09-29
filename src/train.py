@@ -32,6 +32,7 @@ def train(cfg: dict):
     patience = cfg["training"].get("patience", 10)
     print(f"[Train] Loading weights from: {cfg['model']['weights']}")
     print(f"[Train] Early stopping active — patience={patience} epochs")
+    model = YOLO(cfg["model"]["weights"])
     model.train(
         data=dataset_yaml,
         epochs=cfg["training"]["epochs"],
