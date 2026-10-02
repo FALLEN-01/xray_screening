@@ -1,7 +1,5 @@
 # 🔍 X-Ray Prohibited-Item Object Detector
 
-> **Status: ✅ Complete**
-
 An end-to-end deep learning pipeline for detecting prohibited items in X-ray baggage scans. Built on [Ultralytics YOLOv8](https://github.com/ultralytics/ultralytics) and trained on the **SPXray dataset**, the system detects 12 classes of dangerous/prohibited items with bounding boxes, confidence scores, and an interactive Gradio demo.
 
 ---
